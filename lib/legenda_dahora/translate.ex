@@ -11,4 +11,20 @@ defmodule LegendaDahora.Translate do
       _ -> :error
     end
   end
+
+  def translate_subtitle(file) do
+    {:ok, subtitle} = Parsex.Subtitle.parse_file(file)
+    start = System.monotonic_time(:milliseconds)
+
+    ParallelStream.map(subtitle.lines, fn(line) ->
+      Map.put(line, :text, ParallelStream.map(line.text, fn(text) ->
+        translate_yandex("pt", "en", text)
+      end)
+      |> Enum.into([]))
+    end, [num_workers: 60])
+    |> Enum.into([])
+        finish = System.monotonic_time(:milliseconds)
+    finish-start
+
+  end
 end
